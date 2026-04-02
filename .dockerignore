@@ -1,0 +1,22 @@
+GPU-Env/
+.git/
+.gitignore
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb
+.ipynb_checkpoints/
+
+# Large raw datasets
+cotton Dataset/
+Wheat Dataset/
+cotton Dataset_clean_noleak/
+Wheat Dataset_clean_noleak/
+
+# Keep only deploy-ready artifacts
+saved_models/*_efficientnetv2s.keras
+saved_models/*best_*.keras
+saved_models/*test_report.json

@@ -1,0 +1,49 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+GPU-Env/
+
+# Environment and secrets
+.env
+.env.*
+*.local
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Project-specific large assets (do not upload to GitHub)
+cotton Dataset/
+Wheat Dataset/
+cotton Dataset_clean_noleak/
+Wheat Dataset_clean_noleak/
+
+# Save only deploy-ready model artifacts
+saved_models/*
+!saved_models/cotton_final_efficientnetv2b0.keras
+!saved_models/wheat_final_efficientnetv2b0.keras
+!saved_models/cotton_class_names.json
+!saved_models/wheat_class_names.json

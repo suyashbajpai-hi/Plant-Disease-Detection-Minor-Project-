@@ -11,12 +11,22 @@ This repository now includes a deployable FastAPI inference service for your tra
   - `GET /labels/{crop}`
   - `POST /predict/{crop}` (multipart image upload)
 
+## Input validation behavior
+
+`POST /predict/{crop}` now validates uploads so that only cotton/wheat plant leaf images are accepted.
+
+- Non-image files are rejected (`400`).
+- Empty uploads are rejected (`400`).
+- Images that do not look like cotton/wheat leaf inputs are rejected (`422`) using leaf color + connected-region checks.
+
+This keeps the disease predictor from returning results for unsupported images.
+
 ## Model artifacts tracked in git
 
 Only these model files are kept for deployment:
 
 - `saved_models/cotton_final_efficientnetv2b0.keras`
-- `saved_models/wheat_final_efficientnetv2b0.keras`
+- `saved_models/wheat_final_efficientnetv2s.keras`
 - `saved_models/cotton_class_names.json`
 - `saved_models/wheat_class_names.json`
 
@@ -84,3 +94,9 @@ Use these if you want custom model paths:
 - `COTTON_CLASSES_PATH`
 - `WHEAT_CLASSES_PATH`
 - `EAGER_MODEL_LOAD=1` (preload models at startup)
+
+Validation tuning (optional):
+
+- `IMAGE_VALIDATION_MASK_SIZE` (default `96`)
+- `IMAGE_VALIDATION_MIN_COLOR_RATIO` (default `0.25`)
+- `IMAGE_VALIDATION_MIN_CLUSTER_RATIO` (default `0.08`)

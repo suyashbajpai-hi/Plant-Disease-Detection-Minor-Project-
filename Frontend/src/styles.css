@@ -1,0 +1,253 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700;800&display=swap");
+
+:root {
+  --bg-main: #f6efe3;
+  --bg-accent: #f4c06a;
+  --ink: #15201a;
+  --ink-soft: #2e4136;
+  --surface: #fff9ef;
+  --surface-2: #fff3df;
+  --border: #173022;
+  --good: #224f2f;
+  --danger: #9b1f1f;
+  --shadow: 0 10px 0 #173022;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Manrope", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 15% 10%, #ffdd8f 0%, var(--bg-main) 45%),
+    linear-gradient(130deg, #f6efe3 0%, #f3e7d5 45%, #eed5ac 100%);
+}
+
+.page {
+  min-height: 100vh;
+  padding: 2rem 1rem 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.background-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(21, 32, 26, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 32, 26, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+  pointer-events: none;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 90%);
+}
+
+.app-shell {
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1.25rem;
+  animation: rise 600ms ease-out both;
+}
+
+.hero,
+.panel,
+.result-panel {
+  border: 3px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  padding: 1.6rem;
+}
+
+.eyebrow {
+  margin: 0;
+  display: inline-block;
+  background: #173022;
+  color: #fff9ef;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  margin: 0.8rem 0 0.6rem;
+  font-family: "Archivo Black", sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  line-height: 1.05;
+}
+
+.hero p {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--ink-soft);
+  font-size: 1.02rem;
+}
+
+.panel {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: 1fr;
+  padding: 1.2rem;
+}
+
+.predict-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.predict-form label {
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.predict-form select,
+.predict-form input,
+.predict-form button {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 11px;
+  padding: 0.72rem 0.8rem;
+  font: inherit;
+  background: #fff;
+}
+
+.input-hint {
+  margin: -0.15rem 0 0;
+  color: #405347;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.predict-form button {
+  margin-top: 0.4rem;
+  background: var(--bg-accent);
+  color: #1d1708;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 4px 0 #6d4f18;
+}
+
+.predict-form button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.predict-form button:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+.preview-card {
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 0.8rem;
+  background: var(--surface-2);
+}
+
+.preview-card h2 {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+}
+
+.preview-card img,
+.empty-preview {
+  width: 100%;
+  min-height: 230px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+
+.empty-preview {
+  display: grid;
+  place-items: center;
+  color: #5d6d63;
+  font-weight: 600;
+  background: #fffdf7;
+}
+
+.result-panel {
+  padding: 1.2rem;
+  background: #f3ffef;
+}
+
+.result-headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.result-headline h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.result-headline span {
+  background: var(--good);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.32rem 0.8rem;
+  font-weight: 700;
+}
+
+.confidence {
+  margin: 0.72rem 0 0.95rem;
+  font-weight: 700;
+}
+
+.error-text {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.top-k-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.top-k-list li {
+  border: 2px solid #244633;
+  border-radius: 11px;
+  background: #fff;
+  padding: 0.58rem 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 900px) {
+  .page {
+    padding: 2.3rem 2rem 3.2rem;
+  }
+
+  .panel {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}

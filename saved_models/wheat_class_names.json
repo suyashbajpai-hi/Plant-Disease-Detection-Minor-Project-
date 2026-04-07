@@ -1,12 +1,11 @@
 [
-  "Black Rust",
+  "Black Rust(Stem Rust)",
   "BlackPoint",
-  "Brown Rust",
   "FusariumFootRot",
-  "HealthyLeaf",
+  "HealthyPlant",
   "LeafBlight",
   "Mildew",
-  "Septoria",
+  "Smut",
   "WheatBlast",
-  "Yellow Rust"
+  "Yellow Rust(Leaf Rust)"
 ]

@@ -440,3 +440,380 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ─── Recommendation Card ─────────────────────────────────── */
+
+.recommendation-card,
+.info-card,
+.topk-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 1.5rem 1.8rem;
+  box-shadow: var(--shadow);
+  animation: rise 400ms ease both;
+  margin-top: 1rem;
+}
+
+.recommendation-card h3,
+.info-card h3,
+.topk-card h3 {
+  font-family: "Archivo Black", sans-serif;
+  font-size: 1rem;
+  margin: 1.2rem 0 0.5rem;
+  color: var(--ink);
+}
+
+.recommendation-card h3:first-child {
+  margin-top: 0;
+}
+
+.rule-text {
+  background: var(--surface-2);
+  border-left: 4px solid var(--bg-accent);
+  padding: 0.7rem 1rem;
+  border-radius: 0.4rem;
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.symptom-list,
+.source-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.symptom-list li,
+.source-list li {
+  position: relative;
+  padding: 0.35rem 0 0.35rem 1.4rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.symptom-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0.3rem;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.source-list li::before {
+  content: "›";
+  position: absolute;
+  left: 0.3rem;
+  color: var(--good);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.remedy-list {
+  padding-left: 1.4rem;
+  margin: 0;
+}
+
+.remedy-list li {
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.remedy-list li::marker {
+  color: var(--good);
+  font-weight: 700;
+}
+
+.info-card p {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin: 0 0 0.6rem;
+}
+
+/* ─── Top-K Table ──────────────────────────────────────────── */
+
+.topk-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.topk-table th {
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  padding: 0.5rem 0.6rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.topk-table td {
+  padding: 0.55rem 0.6rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid rgba(23, 48, 34, 0.1);
+}
+
+.topk-best td {
+  font-weight: 700;
+  color: var(--good);
+}
+
+.sci-name-small {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+/* ─── LLM Advisory Section ────────────────────────────────── */
+
+.llm-section {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 1.5rem 1.8rem;
+  box-shadow: var(--shadow);
+  animation: rise 400ms ease both;
+  margin-top: 1.2rem;
+}
+
+.llm-section h3 {
+  font-family: "Archivo Black", sans-serif;
+  font-size: 1.1rem;
+  margin: 0 0 0.3rem;
+}
+
+.llm-hint {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0 0 1rem;
+}
+
+.farm-size-row {
+  display: flex;
+  align-items: end;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.farm-size-row label {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.farm-size-row input {
+  width: 140px;
+  padding: 0.55rem 0.8rem;
+  border: 2px solid var(--border);
+  border-radius: 0.6rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--surface-2);
+}
+
+.farm-size-row button {
+  padding: 0.55rem 1.3rem;
+  border: 2px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--bg-accent);
+  font-family: "Archivo Black", sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 100ms, box-shadow 100ms;
+  box-shadow: 0 4px 0 var(--border);
+}
+
+.farm-size-row button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 var(--border);
+}
+
+.farm-size-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* LLM Result Cards */
+
+.llm-result {
+  margin-top: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.llm-card {
+  background: var(--surface-2);
+  border: 1.5px solid rgba(23, 48, 34, 0.15);
+  border-radius: 0.9rem;
+  padding: 1.2rem 1.4rem;
+}
+
+.llm-card h4 {
+  font-family: "Archivo Black", sans-serif;
+  font-size: 0.95rem;
+  margin: 0 0 0.6rem;
+  color: var(--ink);
+}
+
+.llm-card p {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 0 0 0.4rem;
+}
+
+/* LLM Tables */
+
+.llm-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.llm-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  padding: 0.5rem 0.6rem;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.llm-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid rgba(23, 48, 34, 0.08);
+  vertical-align: top;
+}
+
+.tag {
+  display: inline-block;
+  background: var(--bg-accent);
+  color: var(--ink);
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cost-val {
+  font-weight: 700;
+  color: var(--good);
+}
+
+/* Application Steps */
+
+.app-step {
+  border-left: 3px solid var(--bg-accent);
+  padding: 0.6rem 0 0.6rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.app-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--border);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.app-step-body p {
+  margin: 0.15rem 0;
+  font-size: 0.84rem;
+}
+
+/* Cost Summary */
+
+.cost-summary {
+  margin-top: 0.8rem;
+  border-top: 2px solid rgba(23, 48, 34, 0.12);
+  padding-top: 0.6rem;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.cost-row.total {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--ink);
+  border-top: 2px solid var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.cost-card {
+  border-color: var(--good);
+  border-width: 2px;
+}
+
+.llm-raw {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.82rem;
+  background: var(--surface);
+  padding: 0.8rem;
+  border-radius: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ─── LLM Loading Spinner ─────────────────────────────────── */
+
+.llm-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 0;
+}
+
+.llm-loading p {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.spinner {
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 3px solid rgba(23, 48, 34, 0.15);
+  border-top-color: var(--border);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

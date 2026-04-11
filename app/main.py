@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import sys
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,6 +14,16 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from keras.applications.efficientnet_v2 import preprocess_input
 from PIL import Image, UnidentifiedImageError
+from pydantic import BaseModel, Field
+
+# Ensure project root is on sys.path so the Recommendation Model package is importable
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[1])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from importlib import import_module as _import_module
+_rec_engine = _import_module("Recommendation Model.recommendation_engine")
+_gemini_svc = _import_module("Recommendation Model.LLM_Model")
 
 # --- GPU memory safety: allow growth so we don't grab all VRAM ---------------
 def _configure_gpu():
@@ -559,13 +570,16 @@ async def predict(
 
     best = top_predictions[0]
     best_info = _get_disease_info(requested_crop, best["class_name"])
+    best_rec = _rec_engine.get_recommendation(requested_crop, best["class_name"])
 
     top_k_with_info = []
     for pred in top_predictions:
         info = _get_disease_info(requested_crop, pred["class_name"])
+        rec = _rec_engine.get_recommendation(requested_crop, pred["class_name"])
         top_k_with_info.append({
             **pred,
             "scientific_name": info.get("scientific_name", ""),
+            "recommendation": rec,
         })
 
     return {
@@ -575,5 +589,49 @@ async def predict(
         "scientific_name": best_info.get("scientific_name", ""),
         "description": best_info.get("description", ""),
         "treatment": best_info.get("treatment", ""),
+        "recommendation": best_rec,
         "top_k": top_k_with_info,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Gemini LLM-powered detailed recommendation
+# ---------------------------------------------------------------------------
+
+class RecommendRequest(BaseModel):
+    crop: str = Field(..., min_length=1, max_length=50)
+    disease: str = Field(..., min_length=1, max_length=200)
+    remedies: list[str] = Field(default_factory=list)
+    farm_size_acres: float = Field(..., gt=0, le=10_000)
+
+
+@app.post("/recommend")
+async def recommend(body: RecommendRequest) -> dict[str, object]:
+    crop_key = body.crop.strip().lower()
+    if crop_key not in MODELS:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unsupported crop '{body.crop}'. Use one of: {', '.join(sorted(MODELS.keys()))}",
+        )
+
+    try:
+        result = await _gemini_svc.generate_detailed_recommendation(
+            crop=crop_key,
+            disease=body.disease,
+            remedies=body.remedies,
+            farm_size_acres=body.farm_size_acres,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"LLM service error: {exc}",
+        ) from exc
+
+    return {
+        "crop": crop_key,
+        "disease": body.disease,
+        "farm_size_acres": body.farm_size_acres,
+        "detailed_recommendation": result,
     }

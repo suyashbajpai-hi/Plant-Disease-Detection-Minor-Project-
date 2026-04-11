@@ -25,6 +25,12 @@ export default function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // LLM detailed recommendation state
+  const [farmSize, setFarmSize] = useState("");
+  const [llmResult, setLlmResult] = useState(null);
+  const [llmError, setLlmError] = useState("");
+  const [llmLoading, setLlmLoading] = useState(false);
+
   useEffect(() => {
     if (!file) {
       setPreviewUrl("");
@@ -37,13 +43,50 @@ export default function App() {
 
   const endpoint = useMemo(() => `${API_BASE_URL}/predict/${crop}`, [crop]);
 
+  async function fetchLlmAdvice(predictionData, acres) {
+    setLlmError("");
+    setLlmResult(null);
+    setLlmLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/recommend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          crop: predictionData.crop,
+          disease: predictionData.predicted_class,
+          remedies: predictionData.recommendation?.remedies || [],
+          farm_size_acres: acres,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.detail || "Failed to get detailed recommendation.");
+      }
+      setLlmResult(data.detailed_recommendation);
+    } catch (err) {
+      setLlmError(err.message || "Could not connect to LLM service.");
+    } finally {
+      setLlmLoading(false);
+    }
+  }
+
   async function handlePredict(event) {
     event.preventDefault();
     setError("");
     setResult(null);
+    setLlmResult(null);
+    setLlmError("");
 
     if (!file) {
       setError("Please upload a plant leaf image first.");
+      return;
+    }
+
+    const acres = parseFloat(farmSize);
+    if (!farmSize || isNaN(acres) || acres <= 0) {
+      setError("Please enter a valid farm size in acres.");
       return;
     }
 
@@ -63,6 +106,12 @@ export default function App() {
       }
 
       setResult(data);
+
+      // Auto-trigger LLM advisory for diseased plants
+      const healthy = data.predicted_class?.toLowerCase().includes("healthy");
+      if (!healthy) {
+        fetchLlmAdvice(data, acres);
+      }
     } catch (err) {
       setError(err.message || "Could not connect to API.");
     } finally {
@@ -96,6 +145,8 @@ export default function App() {
                 setCrop(e.target.value);
                 setResult(null);
                 setError("");
+                setLlmResult(null);
+                setLlmError("");
               }}
             >
               {CROP_OPTIONS.map((option) => (
@@ -114,14 +165,27 @@ export default function App() {
                 setFile(e.target.files?.[0] || null);
                 setResult(null);
                 setError("");
+                setLlmResult(null);
+                setLlmError("");
               }}
             />
             <p className="input-hint">
               Only cotton or wheat plant leaf images are accepted. Other images are rejected.
             </p>
 
-            <button type="submit" disabled={loading}>
-              {loading ? "Analyzing..." : "Predict Disease"}
+            <label htmlFor="farmSize">Farm Size (acres)</label>
+            <input
+              id="farmSize"
+              type="number"
+              min="0.1"
+              step="0.1"
+              placeholder="e.g. 5"
+              value={farmSize}
+              onChange={(e) => setFarmSize(e.target.value)}
+            />
+
+            <button type="submit" disabled={loading || llmLoading}>
+              {loading ? "Analyzing..." : llmLoading ? "Generating Report..." : "Predict Disease"}
             </button>
           </form>
 
@@ -175,9 +239,128 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Detailed AI Advisory (auto-loaded) */}
+                {!isHealthy && (
+                  <div className="llm-section">
+                    <h3>🤖 AI-Powered Detailed Advisory</h3>
 
+                    {llmLoading && (
+                      <div className="llm-loading">
+                        <div className="spinner" />
+                        <p>Generating detailed report for {farmSize} acres...</p>
+                      </div>
+                    )}
 
+                    {llmError && <p className="error-text">{llmError}</p>}
 
+                    {llmResult && !llmResult.parse_error && (
+                      <div className="llm-result">
+                        {/* Cause Analysis */}
+                        {llmResult.cause_analysis && (
+                          <div className="llm-card">
+                            <h4>🔬 Why This Disease Occurs</h4>
+                            <p>{llmResult.cause_analysis}</p>
+                          </div>
+                        )}
+
+                        {/* Cure Details */}
+                        {llmResult.cure_details?.length > 0 && (
+                          <div className="llm-card">
+                            <h4>💊 Cure Details</h4>
+                            <table className="llm-table">
+                              <thead>
+                                <tr>
+                                  <th>Product</th>
+                                  <th>Type</th>
+                                  <th>Active Ingredient</th>
+                                  <th>Dosage / Acre</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {llmResult.cure_details.map((item, i) => (
+                                  <tr key={i}>
+                                    <td>{item.product_name}</td>
+                                    <td><span className="tag">{item.type}</span></td>
+                                    <td>{item.active_ingredient}</td>
+                                    <td>{item.dosage_per_acre}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {/* Application Guide */}
+                        {llmResult.application_guide?.length > 0 && (
+                          <div className="llm-card">
+                            <h4>📅 Application Timing & Method</h4>
+                            {llmResult.application_guide.map((step, i) => (
+                              <div key={i} className="app-step">
+                                <div className="app-step-header">
+                                  <span className="step-num">{i + 1}</span>
+                                  <strong>{step.stage}</strong>
+                                </div>
+                                <div className="app-step-body">
+                                  <p><strong>When:</strong> {step.timing}</p>
+                                  <p><strong>How:</strong> {step.method}</p>
+                                  <p><strong>Precautions:</strong> {step.precautions}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Cost Analysis */}
+                        {llmResult.cost_analysis && (
+                          <div className="llm-card cost-card">
+                            <h4>💰 Cost Analysis for {llmResult.cost_analysis.farm_size_acres} Acres</h4>
+                            {llmResult.cost_analysis.items?.length > 0 && (
+                              <table className="llm-table">
+                                <thead>
+                                  <tr>
+                                    <th>Product</th>
+                                    <th>Quantity Required</th>
+                                    <th>Unit Price (₹)</th>
+                                    <th>Total Cost (₹)</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {llmResult.cost_analysis.items.map((item, i) => (
+                                    <tr key={i}>
+                                      <td>{item.product_name}</td>
+                                      <td>{item.quantity_required}</td>
+                                      <td>{item.unit_price_inr}</td>
+                                      <td className="cost-val">{item.total_cost_inr}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                            <div className="cost-summary">
+                              {llmResult.cost_analysis.labour_cost_inr && (
+                                <div className="cost-row">
+                                  <span>Labour / Spraying Cost</span>
+                                  <span>₹ {llmResult.cost_analysis.labour_cost_inr}</span>
+                                </div>
+                              )}
+                              <div className="cost-row total">
+                                <span>Total Estimated Cost</span>
+                                <span>₹ {llmResult.cost_analysis.total_estimated_cost_inr}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {llmResult?.parse_error && (
+                      <div className="llm-card">
+                        <h4>AI Response</h4>
+                        <pre className="llm-raw">{llmResult.raw_response}</pre>
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </section>

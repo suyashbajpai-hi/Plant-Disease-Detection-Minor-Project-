@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 
 const CROP_OPTIONS = [
-  { value: "cotton", label: "Cotton" },
-  { value: "wheat", label: "Wheat" },
+  { value: "cotton", label: "🌿 Cotton" },
+  { value: "wheat", label: "🌾 Wheat" },
 ];
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
 
 function formatConfidence(value) {
   return `${(value * 100).toFixed(2)}%`;
+}
+
+function severityLevel(confidence) {
+  if (confidence >= 0.9) return { label: "High Confidence", color: "#22763a" };
+  if (confidence >= 0.7) return { label: "Moderate Confidence", color: "#b8860b" };
+  return { label: "Low Confidence", color: "#9b1f1f" };
 }
 
 export default function App() {
@@ -46,7 +52,7 @@ export default function App() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`${endpoint}?top_k=3`, {
+      const response = await fetch(`${endpoint}?top_k=5`, {
         method: "POST",
         body: formData,
       });
@@ -63,6 +69,9 @@ export default function App() {
       setLoading(false);
     }
   }
+
+  const severity = result ? severityLevel(result.confidence) : null;
+  const isHealthy = result?.predicted_class?.toLowerCase().includes("healthy");
 
   return (
     <div className="page">
@@ -132,22 +141,43 @@ export default function App() {
 
             {result && (
               <>
-                <div className="result-headline">
-                  <h2>Predicted Disease</h2>
-                  <span>{result.predicted_class}</span>
+                {/* Primary diagnosis */}
+                <div className="diagnosis-card">
+                  <div className="diagnosis-header">
+                    <span className={`status-badge ${isHealthy ? "healthy" : "disease"}`}>
+                      {isHealthy ? "✓ Healthy" : "⚠ Disease Detected"}
+                    </span>
+                    <span className="crop-badge">{result.crop}</span>
+                  </div>
+
+                  <h2 className="disease-name">{result.predicted_class}</h2>
+                  {result.scientific_name && (
+                    <p className="scientific-name">{result.scientific_name}</p>
+                  )}
+
+                  <div className="confidence-section">
+                    <div className="confidence-header">
+                      <span>Confidence</span>
+                      <strong style={{ color: severity.color }}>{formatConfidence(result.confidence)}</strong>
+                    </div>
+                    <div className="confidence-bar-track">
+                      <div
+                        className="confidence-bar-fill"
+                        style={{
+                          width: `${(result.confidence * 100).toFixed(1)}%`,
+                          backgroundColor: severity.color
+                        }}
+                      />
+                    </div>
+                    <span className="severity-label" style={{ color: severity.color }}>
+                      {severity.label}
+                    </span>
+                  </div>
                 </div>
 
-                <p className="confidence">Confidence: {formatConfidence(result.confidence)}</p>
 
-                <h3>Top Predictions</h3>
-                <ul className="top-k-list">
-                  {result.top_k?.map((item) => (
-                    <li key={item.class_name}>
-                      <span>{item.class_name}</span>
-                      <strong>{formatConfidence(item.confidence)}</strong>
-                    </li>
-                  ))}
-                </ul>
+
+
               </>
             )}
           </section>

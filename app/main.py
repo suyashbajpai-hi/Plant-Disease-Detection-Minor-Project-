@@ -14,6 +14,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from keras.applications.efficientnet_v2 import preprocess_input
 from PIL import Image, UnidentifiedImageError
 
+# --- GPU memory safety: allow growth so we don't grab all VRAM ---------------
+def _configure_gpu():
+    try:
+        gpus = tf.config.list_physical_devices("GPU")
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except Exception:
+        pass  # CPU-only or already initialised
+
+_configure_gpu()
+# ------------------------------------------------------------------------------
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 MODEL_DIR = Path(os.getenv("MODEL_DIR", BASE_DIR / "saved_models"))
 
@@ -95,7 +107,14 @@ class CropModel:
                     f"Invalid class names in {self.config.class_names_path}. Expected a non-empty JSON list."
                 )
 
-            model = tf.keras.models.load_model(str(self.config.model_path), compile=False)
+            # Try GPU first; on OOM / internal GPU error fall back to CPU
+            _GPU_ERRORS = (tf.errors.ResourceExhaustedError, tf.errors.InternalError, RuntimeError)
+            try:
+                model = tf.keras.models.load_model(str(self.config.model_path), compile=False)
+            except _GPU_ERRORS:
+                with tf.device("/CPU:0"):
+                    model = tf.keras.models.load_model(str(self.config.model_path), compile=False)
+
             resolved_size = self._resolve_model_image_size(model)
 
             self.class_names = [str(name) for name in class_names]
@@ -134,7 +153,12 @@ class CropModel:
         batch = np.expand_dims(array, axis=0)
         batch = preprocess_input(batch)
 
-        raw = self.model(batch, training=False).numpy()[0]
+        # Run inference; on GPU OOM / internal error transparently retry on CPU
+        try:
+            raw = self.model(batch, training=False).numpy()[0]
+        except (tf.errors.ResourceExhaustedError, tf.errors.InternalError):
+            with tf.device("/CPU:0"):
+                raw = self.model(batch, training=False).numpy()[0]
         probs = _to_probabilities(raw)
 
         top_k = max(1, min(int(top_k), len(self.class_names)))
@@ -195,8 +219,8 @@ CROP_CONFIGS: dict[str, CropConfig] = {
         model_path=_model_path_from_env_or_candidates(
             "COTTON_MODEL_PATH",
             [
-                MODEL_DIR / "cotton_final_efficientnetv2b0.keras",
                 MODEL_DIR / "cotton_final_efficientnetv2s.keras",
+                MODEL_DIR / "cotton_final_efficientnetv2b0.keras",
             ],
         ),
         class_names_path=_path_from_env(
@@ -220,6 +244,102 @@ CROP_CONFIGS: dict[str, CropConfig] = {
 }
 
 MODELS = {crop: CropModel(crop, cfg) for crop, cfg in CROP_CONFIGS.items()}
+
+DISEASE_INFO: dict[str, dict[str, dict[str, str]]] = {
+    "cotton": {
+        "Bacterial Blight": {
+            "scientific_name": "Xanthomonas citri subsp. malvacearum",
+            "description": "Angular, water-soaked lesions on leaves that turn brown and necrotic. Severely infected leaves may dry up and drop prematurely.",
+            "treatment": "Use disease-free seeds, apply copper-based bactericides, practice crop rotation, and remove infected plant debris.",
+        },
+        "Curl Virus": {
+            "scientific_name": "Cotton Leaf Curl Virus (CLCuV, Begomovirus)",
+            "description": "Upward or downward curling of leaves with vein thickening and enations on the underside. Stunted plant growth and reduced boll formation.",
+            "treatment": "Control whitefly vector (Bemisia tabaci) with neem-based or systemic insecticides. Use resistant varieties and remove infected plants early.",
+        },
+        "Healthy Leaf": {
+            "scientific_name": "Gossypium spp. (No Pathogen)",
+            "description": "The leaf shows no signs of disease, pest damage, or nutrient deficiency. Normal green coloration and structure.",
+            "treatment": "No treatment required. Continue regular crop monitoring and balanced fertilization.",
+        },
+        "Herbicide Growth Damage": {
+            "scientific_name": "Abiotic Stress (Herbicide Phytotoxicity)",
+            "description": "Abnormal leaf curling, cupping, or strapping caused by herbicide drift or residual herbicide in soil. May show chlorosis or necrosis.",
+            "treatment": "Avoid herbicide drift during application. Use buffer zones, apply growth regulators to aid recovery, and ensure proper herbicide selection.",
+        },
+        "Leaf Hopper Jassids": {
+            "scientific_name": "Amrasca biguttula biguttula (Ishida)",
+            "description": "Yellowing and curling of leaf margins progressing inward. Leaves show a burnt appearance (hopper burn) in severe infestations.",
+            "treatment": "Apply systemic insecticides (imidacloprid, thiamethoxam). Use resistant varieties and maintain proper plant spacing for air circulation.",
+        },
+        "Leaf Redding": {
+            "scientific_name": "Physiological Disorder / Leaf Reddening Syndrome",
+            "description": "Reddish-purple discoloration of leaves due to nutrient deficiency (magnesium/nitrogen), waterlogging, or pest-induced stress.",
+            "treatment": "Apply balanced fertilizers with magnesium supplementation. Improve drainage and control sucking pests that may trigger reddening.",
+        },
+        "Leaf Variegation": {
+            "scientific_name": "Genetic Mosaicism / Nutrient Deficiency",
+            "description": "Irregular patches of light and dark green on leaves. May be caused by genetic factors, viral infections, or micronutrient imbalance.",
+            "treatment": "Apply micronutrient foliar sprays (zinc, manganese, iron). If viral, control insect vectors and remove symptomatic plants.",
+        },
+    },
+    "wheat": {
+        "Black Rust(Stem Rust)": {
+            "scientific_name": "Puccinia graminis f. sp. tritici",
+            "description": "Dark reddish-brown to black pustules on stems, leaves, and leaf sheaths. Can cause severe yield loss by weakening stems and reducing grain fill.",
+            "treatment": "Use resistant varieties, apply fungicides (propiconazole, tebuconazole) at early infection, and eliminate alternate host (barberry).",
+        },
+        "BlackPoint": {
+            "scientific_name": "Bipolaris sorokiniana / Alternaria alternata",
+            "description": "Dark discoloration at the embryo end of wheat grains. Affects grain quality and germination but not always yield.",
+            "treatment": "Timely harvest to avoid rain damage, use fungicide seed treatments, and ensure proper grain drying and storage.",
+        },
+        "FusariumFootRot": {
+            "scientific_name": "Fusarium graminearum / F. culmorum",
+            "description": "Brown lesions at the stem base, causing wilting, white-head symptoms, and premature death of tillers.",
+            "treatment": "Rotate with non-cereal crops, use seed treatments (fludioxonil), avoid deep sowing, and manage crop residue.",
+        },
+        "HealthyPlant": {
+            "scientific_name": "Triticum aestivum (No Pathogen)",
+            "description": "The plant shows no signs of disease or pest damage. Normal green coloration and healthy growth pattern.",
+            "treatment": "No treatment required. Maintain regular monitoring, balanced nutrition, and good agronomic practices.",
+        },
+        "LeafBlight": {
+            "scientific_name": "Bipolaris sorokiniana (Spot Blotch)",
+            "description": "Dark brown elliptical lesions on leaves that may coalesce, causing extensive leaf blight and premature drying.",
+            "treatment": "Apply foliar fungicides (propiconazole, mancozeb), use resistant varieties, and practice crop rotation.",
+        },
+        "Mildew": {
+            "scientific_name": "Blumeria graminis f. sp. tritici",
+            "description": "White to gray powdery fungal growth on leaf surfaces, stems, and heads. Reduces photosynthesis and grain quality.",
+            "treatment": "Use resistant varieties, apply fungicides (triadimefon, sulfur), avoid excessive nitrogen, and ensure adequate spacing.",
+        },
+        "Smut": {
+            "scientific_name": "Ustilago tritici (Loose Smut)",
+            "description": "Grain heads replaced by masses of dark brown to black spores. Infected heads appear earlier than healthy ones.",
+            "treatment": "Use certified smut-free seeds, apply systemic seed treatments (carboxin, thiram), and use hot water seed treatment.",
+        },
+        "WheatBlast": {
+            "scientific_name": "Magnaporthe oryzae pathotype Triticum (MoT)",
+            "description": "Bleached or white heads with shriveled grains. Rapid spike death under warm, humid conditions. Highly destructive.",
+            "treatment": "Use resistant varieties, apply fungicides preventively (strobilurins + triazoles), avoid late sowing, and manage crop residue.",
+        },
+        "Yellow Rust(Leaf Rust)": {
+            "scientific_name": "Puccinia striiformis f. sp. tritici",
+            "description": "Yellow-orange pustules arranged in stripes along leaf veins. Favored by cool, moist conditions. Can cause severe yield reduction.",
+            "treatment": "Use resistant varieties, apply foliar fungicides early (propiconazole, tebuconazole), and monitor fields regularly.",
+        },
+    },
+}
+
+
+def _get_disease_info(crop: str, class_name: str) -> dict[str, str]:
+    crop_info = DISEASE_INFO.get(crop, {})
+    return crop_info.get(class_name, {
+        "scientific_name": "",
+        "description": "",
+        "treatment": "",
+    })
 
 app = FastAPI(
     title="Plant Disease Inference API",
@@ -438,9 +558,22 @@ async def predict(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     best = top_predictions[0]
+    best_info = _get_disease_info(requested_crop, best["class_name"])
+
+    top_k_with_info = []
+    for pred in top_predictions:
+        info = _get_disease_info(requested_crop, pred["class_name"])
+        top_k_with_info.append({
+            **pred,
+            "scientific_name": info.get("scientific_name", ""),
+        })
+
     return {
         "crop": requested_crop,
         "predicted_class": best["class_name"],
         "confidence": best["confidence"],
-        "top_k": top_predictions,
+        "scientific_name": best_info.get("scientific_name", ""),
+        "description": best_info.get("description", ""),
+        "treatment": best_info.get("treatment", ""),
+        "top_k": top_k_with_info,
     }

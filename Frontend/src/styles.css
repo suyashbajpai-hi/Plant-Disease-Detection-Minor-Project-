@@ -181,53 +181,238 @@ body {
   background: #f3ffef;
 }
 
-.result-headline {
+/* ── Diagnosis Card ── */
+.diagnosis-card {
+  padding: 1.2rem;
+  border: 2px solid #244633;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.diagnosis-header {
   display: flex;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  gap: 0.45rem;
-  align-items: center;
+  margin-bottom: 0.6rem;
 }
 
-.result-headline h2 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.result-headline span {
-  background: var(--good);
-  color: #fff;
+.status-badge {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
-  padding: 0.32rem 0.8rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.healthy {
+  background: #224f2f;
+  color: #fff;
+}
+
+.status-badge.disease {
+  background: #9b1f1f;
+  color: #fff;
+}
+
+.crop-badge {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background: var(--bg-accent);
+  color: #1d1708;
+  text-transform: capitalize;
+}
+
+.disease-name {
+  margin: 0.3rem 0 0.15rem;
+  font-family: "Archivo Black", sans-serif;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.scientific-name {
+  margin: 0 0 0.8rem;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: #4a6e53;
+  font-weight: 500;
+}
+
+.confidence-section {
+  margin-top: 0.6rem;
+}
+
+.confidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.confidence-bar-track {
+  height: 12px;
+  background: #e8efe9;
+  border-radius: 999px;
+  border: 1.5px solid #d0ddd1;
+  overflow: hidden;
+}
+
+.confidence-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 600ms ease;
+}
+
+.severity-label {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
-.confidence {
-  margin: 0.72rem 0 0.95rem;
+/* ── Info Cards (Description + Treatment) ── */
+.info-cards {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.info-card {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid #d0ddd1;
+}
+
+.info-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.info-card p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.description-card {
+  background: #f7fbf7;
+}
+
+.treatment-card {
+  background: #fffcf0;
+  border-color: #e8ddb8;
+}
+
+/* ── Top-K Predictions ── */
+.topk-section {
+  margin-top: 1rem;
+}
+
+.topk-section h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.topk-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.topk-item {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid #d0ddd1;
+  border-radius: 11px;
+  background: #fff;
+  transition: border-color 200ms;
+}
+
+.topk-item.topk-best {
+  border-color: #244633;
+  background: #f3ffef;
+}
+
+.topk-rank {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8efe9;
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: #244633;
+}
+
+.topk-best .topk-rank {
+  background: #244633;
+  color: #fff;
+}
+
+.topk-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.topk-name-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.topk-name {
   font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.topk-conf {
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.topk-sci {
+  display: block;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: #68876f;
+  margin-top: 0.1rem;
+}
+
+.topk-bar-track {
+  height: 6px;
+  margin-top: 0.35rem;
+  background: #e8efe9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.topk-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #3a9e5c;
+  transition: width 500ms ease;
+}
+
+.topk-best .topk-bar-fill {
+  background: #224f2f;
 }
 
 .error-text {
   margin: 0;
   color: var(--danger);
   font-weight: 700;
-}
-
-.top-k-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 0.5rem;
-}
-
-.top-k-list li {
-  border: 2px solid #244633;
-  border-radius: 11px;
-  background: #fff;
-  padding: 0.58rem 0.7rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 @keyframes rise {
@@ -249,5 +434,9 @@ body {
   .panel {
     grid-template-columns: 1fr 1fr;
     align-items: start;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr 1fr;
   }
 }

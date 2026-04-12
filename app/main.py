@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from keras.applications.efficientnet_v2 import preprocess_input
 from PIL import Image, UnidentifiedImageError
@@ -509,6 +509,15 @@ def root() -> dict[str, object]:
         "supported_crops": sorted(MODELS.keys()),
         "predict_endpoint": "/predict/{crop}",
         "health_endpoint": "/health",
+        "required_parameters": {
+            "file": "Image file (REQUIRED)",
+            "severity_level": "Mild, Moderate, or Severe (REQUIRED)"
+        },
+        "optional_parameters": {
+            "top_k": "Number of predictions (1-10, default: 3)",
+            "growth_stage": "Crop growth stage (default: Unknown)",
+            "farm_size": "Farm size in acres (default: Unknown)"
+        }
     }
 
 
@@ -538,16 +547,47 @@ def labels(crop: str) -> dict[str, object]:
     return {"crop": crop.lower(), "labels": model.class_names}
 
 
+@app.get("/growth-stages/{crop}")
+def growth_stages(crop: str) -> dict[str, object]:
+    """Get supported growth stages and severity levels for a specific crop."""
+    requested_crop = crop.strip().lower()
+    if requested_crop not in ["cotton", "wheat"]:
+        raise HTTPException(status_code=400, detail=f"Unsupported crop: {crop}. Use 'cotton' or 'wheat'.")
+    
+    stages = _rec_engine.get_supported_growth_stages(requested_crop)
+    return {
+        "crop": requested_crop,
+        "growth_stages": stages,
+        "severity_levels": {
+            "options": ["Mild", "Moderate", "Severe"],
+            "required": True,
+            "description": "Severity level is REQUIRED for disease prediction and recommendations. Choose based on infection intensity."
+        },
+    }
+
+
 @app.post("/predict/{crop}")
 async def predict(
     crop: str,
     file: UploadFile = File(...),
-    top_k: int = 3,
+    top_k: int = Form(3),
+    growth_stage: str = Form("Unknown"),
+    severity_level: str = Form(...),
+    farm_size: str = Form("Unknown"),
 ) -> dict[str, object]:
     requested_crop = crop.strip().lower()
 
     if top_k < 1 or top_k > 10:
         raise HTTPException(status_code=400, detail="top_k must be between 1 and 10.")
+
+    # Validate severity_level
+    valid_severity_levels = ["mild", "moderate", "severe"]
+    severity_normalized = severity_level.strip().lower()
+    if severity_normalized not in valid_severity_levels:
+        raise HTTPException(
+            status_code=400,
+            detail=f"severity_level must be one of: Mild, Moderate, Severe. Got: '{severity_level}'"
+        )
 
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Please upload a valid image file.")
@@ -570,12 +610,24 @@ async def predict(
 
     best = top_predictions[0]
     best_info = _get_disease_info(requested_crop, best["class_name"])
-    best_rec = _rec_engine.get_recommendation(requested_crop, best["class_name"])
+    best_rec = _rec_engine.get_enhanced_recommendation(
+        crop=requested_crop,
+        class_name=best["class_name"],
+        growth_stage=growth_stage,
+        severity_level=severity_level,
+        farm_size=farm_size,
+    )
 
     top_k_with_info = []
     for pred in top_predictions:
         info = _get_disease_info(requested_crop, pred["class_name"])
-        rec = _rec_engine.get_recommendation(requested_crop, pred["class_name"])
+        rec = _rec_engine.get_enhanced_recommendation(
+            crop=requested_crop,
+            class_name=pred["class_name"],
+            growth_stage=growth_stage,
+            severity_level=severity_level,
+            farm_size=farm_size,
+        )
         top_k_with_info.append({
             **pred,
             "scientific_name": info.get("scientific_name", ""),
@@ -590,6 +642,9 @@ async def predict(
         "description": best_info.get("description", ""),
         "treatment": best_info.get("treatment", ""),
         "recommendation": best_rec,
+        "growth_stage": growth_stage,
+        "severity_level": severity_level,
+        "farm_size": farm_size,
         "top_k": top_k_with_info,
     }
 
@@ -603,6 +658,8 @@ class RecommendRequest(BaseModel):
     disease: str = Field(..., min_length=1, max_length=200)
     remedies: list[str] = Field(default_factory=list)
     farm_size_acres: float = Field(..., gt=0, le=10_000)
+    growth_stage: str = Field(default="Unknown", max_length=100)
+    severity_level: str = Field(..., min_length=1, max_length=50)
 
 
 @app.post("/recommend")
@@ -614,24 +671,68 @@ async def recommend(body: RecommendRequest) -> dict[str, object]:
             detail=f"Unsupported crop '{body.crop}'. Use one of: {', '.join(sorted(MODELS.keys()))}",
         )
 
+    # Validate severity_level
+    valid_severity_levels = ["mild", "moderate", "severe"]
+    severity_normalized = body.severity_level.strip().lower()
+    if severity_normalized not in valid_severity_levels:
+        raise HTTPException(
+            status_code=400,
+            detail=f"severity_level must be one of: Mild, Moderate, Severe. Got: '{body.severity_level}'"
+        )
+
+    # Get enhanced recommendations based on growth stage and severity level
+    enhanced_rec = _rec_engine.get_enhanced_recommendation(
+        crop=crop_key,
+        class_name=body.disease,
+        growth_stage=body.growth_stage,
+        severity_level=body.severity_level,
+    )
+    
+    # Use enhanced remedies for LLM context
+    remedies_for_llm = body.remedies if body.remedies else enhanced_rec.get("remedies", [])
+
     try:
         result = await _gemini_svc.generate_detailed_recommendation(
             crop=crop_key,
             disease=body.disease,
-            remedies=body.remedies,
+            remedies=remedies_for_llm,
             farm_size_acres=body.farm_size_acres,
+            growth_stage=body.growth_stage,
+            severity_level=body.severity_level,
+            recommendation_data=enhanced_rec,
         )
     except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        # This includes quota exhausted and service unavailable errors
+        error_msg = str(exc)
+        if "high demand" in error_msg.lower() or "unavailable" in error_msg.lower():
+            detail = (
+                "The AI recommendation service is temporarily unavailable due to high demand. "
+                "This is usually temporary. Please try again in 30-60 seconds."
+            )
+        else:
+            detail = error_msg
+        raise HTTPException(status_code=503, detail=detail) from exc
     except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"LLM service error: {exc}",
-        ) from exc
+        error_str = str(exc)
+        # Catch other transient errors
+        if "503" in error_str or "UNAVAILABLE" in error_str:
+            detail = (
+                "The AI recommendation service is temporarily experiencing issues. "
+                "Please try again in a moment."
+            )
+            raise HTTPException(status_code=503, detail=detail) from exc
+        else:
+            raise HTTPException(
+                status_code=502,
+                detail=f"LLM service error: {exc}",
+            ) from exc
 
     return {
         "crop": crop_key,
         "disease": body.disease,
         "farm_size_acres": body.farm_size_acres,
+        "growth_stage": body.growth_stage,
+        "severity_level": body.severity_level,
+        "base_recommendations": enhanced_rec,
         "detailed_recommendation": result,
     }

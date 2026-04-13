@@ -28,7 +28,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Manrope", sans-serif;
+  font-family: "Segoe UI", "San Francisco", "Roboto", sans-serif;
   color: var(--ink);
   background: radial-gradient(circle at 15% 10%, #a5d6a7 0%, var(--bg-main) 45%),
     linear-gradient(130deg, #e8f5e9 0%, #c8e6c9 45%, #a5d6a7 100%);
@@ -53,10 +53,11 @@ body {
 
 .app-shell {
   position: relative;
-  max-width: 1080px;
+  max-width: 1400px;
+  width: 95%;
   margin: 0 auto;
   display: grid;
-  gap: 1.25rem;
+  gap: 0.8rem;
   animation: rise 600ms ease-out both;
 }
 
@@ -70,7 +71,11 @@ body {
 }
 
 .hero {
-  padding: 1.6rem;
+  padding: 1.2rem 1.4rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .eyebrow {
@@ -78,44 +83,67 @@ body {
   display: inline-block;
   background: #2e7d32;
   color: #f1f8f4;
-  padding: 0.35rem 0.7rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .hero h1 {
-  margin: 0.8rem 0 0.6rem;
+  margin: 0.5rem 0 0.3rem;
   font-family: "Archivo Black", sans-serif;
-  font-size: clamp(1.8rem, 3.5vw, 3rem);
-  line-height: 1.05;
+  font-size: clamp(1.1rem, 2vw, 3.5rem);
+  line-height: 1.15;
 }
 
-.hero > p:not(.eyebrow) {
+.hero-subtitle {
   margin: 0;
-  max-width: 72ch;
   color: var(--ink-soft);
-  font-size: 1.02rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 .panel {
   display: grid;
-  gap: 1.5rem;
+  gap: 0.8rem;
   grid-template-columns: 1fr;
-  padding: 1.8rem;
+  padding: 0.9rem;
   background: linear-gradient(135deg, var(--surface) 0%, #ffffff 100%);
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 0 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.brand-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.brand-name {
+  font-family: "Archivo Black", sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--ink);
+  line-height: 1;
 }
 
 .predict-form {
   display: grid;
-  gap: 1.5rem;
+  gap: 0.65rem;
 }
 
 .form-section {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.35rem;
   transition: all 200ms ease;
 }
 
@@ -126,7 +154,7 @@ body {
 .form-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 0.65rem;
 }
 
 @media (min-width: 600px) {
@@ -137,7 +165,7 @@ body {
 
 .form-label {
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   letter-spacing: 0.01em;
   color: var(--ink);
 }
@@ -153,13 +181,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1rem;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
   border: 2.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
   font-family: "Manrope", sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
@@ -187,12 +215,12 @@ body {
 .form-input {
   width: 100%;
   border: 2px solid var(--border);
-  border-radius: 11px;
-  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
   font: inherit;
   background: #fff;
   transition: all 200ms ease;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
 }
 
 .form-select:hover,
@@ -215,9 +243,9 @@ body {
 }
 
 .input-hint {
-  margin: 0.25rem 0 0;
+  margin: 0.15rem 0 0;
   color: #388e3c;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -225,15 +253,15 @@ body {
 }
 
 .submit-button {
-  margin-top: 0.5rem;
+  margin-top: 0.2rem;
   width: 100%;
   border: none;
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
   background: linear-gradient(135deg, var(--bg-accent) 0%, #43a047 100%);
   color: #ffffff;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 250ms ease;
   box-shadow: 0 6px 0 #2e7d32, 0 8px 20px rgba(46, 125, 50, 0.3);
@@ -288,8 +316,8 @@ body {
 .dropzone {
   width: 100%;
   border: 3px dashed var(--border);
-  border-radius: 14px;
-  padding: 2.5rem 1.5rem;
+  border-radius: 12px;
+  padding: 1rem 0.8rem;
   background: linear-gradient(135deg, #f1f8f4 0%, #ffffff 100%);
   cursor: pointer;
   transition: all 250ms ease;
@@ -671,10 +699,24 @@ body {
   }
 
   .panel {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: 1fr;
     align-items: start;
-    gap: 2rem;
-    padding: 2rem;
+    gap: 1.2rem;
+    padding: 1rem;
+  }
+
+  .preview-card {
+    max-height: var(--form-height);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .preview-card img {
+    flex: 1;
+    min-height: 0;
+    object-fit: contain;
   }
 
   .info-cards {

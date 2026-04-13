@@ -34,11 +34,20 @@ export default function ReportPage() {
   return (
     <div className="page">
       <div className="background-grid" aria-hidden="true" />
-      <main className="app-shell">
+      <main className="app-shell" style={{ position: "relative" }}>
         {/* Back button */}
-        <button className="back-button" onClick={() => navigate("/")}>
+        <button className="back-button" onClick={() => navigate("/")} style={{ position: "absolute", top: "1rem", left: "1rem", zIndex: 10 }}>
           ← Back
         </button>
+
+        {/* Brand header */}
+        <section className="hero" style={{ border: "none", boxShadow: "none", background: "transparent", paddingBottom: 0 }}>
+          <div className="brand-header">
+            <img src="/logo.png" alt="AgriCure" className="brand-logo" />
+            <span className="brand-name">AgriCure</span>
+          </div>
+          <h1>Plant Disease Detection & Remedie Recommended Report</h1>
+        </section>
 
         {/* Diagnosis card with image */}
         <section className="report-top">

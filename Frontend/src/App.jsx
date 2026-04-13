@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Icon,
@@ -49,6 +49,22 @@ export default function App() {
   const [llmResult, setLlmResult] = useState(null);
   const [llmError, setLlmError] = useState("");
   const [llmLoading, setLlmLoading] = useState(false);
+
+  // Ref to measure form height and constrain preview card
+  const formRef = useRef(null);
+  const panelRef = useRef(null);
+
+  useLayoutEffect(() => {
+    function syncHeight() {
+      if (formRef.current && panelRef.current) {
+        const h = formRef.current.offsetHeight;
+        panelRef.current.style.setProperty('--form-height', `${h}px`);
+      }
+    }
+    syncHeight();
+    window.addEventListener('resize', syncHeight);
+    return () => window.removeEventListener('resize', syncHeight);
+  });
 
   // Auto-navigate to report page when LLM result is ready
   useEffect(() => {
@@ -228,16 +244,18 @@ export default function App() {
       <div className="background-grid" aria-hidden="true" />
       <main className="app-shell">
         <section className="hero">
-          <p className="eyebrow">AI Crop Diagnostic</p>
-          <h1>Plant Disease Detection</h1>
-          <p>
-            Upload a clear leaf photo and choose the crop model. The system
-            predicts the disease class and confidence in seconds.
+          <div className="brand-header">
+            <img src="/logo.png" alt="AgriCure" className="brand-logo" />
+            <span className="brand-name">AgriCure</span>
+          </div>
+          <h1>Plant Disease Detection & Remedie Recommended</h1>
+          <p className="hero-subtitle">
+            Upload a clear leaf photo and choose the crop model. The system predicts the disease class and confidence in seconds.
           </p>
         </section>
 
-        <section className="panel">
-          <form className="predict-form" onSubmit={handlePredict}>
+        <section className="panel" ref={panelRef}>
+          <form className="predict-form" ref={formRef} onSubmit={handlePredict}>
             <div className="form-section">
               <label className="form-label">Select Crop Model</label>
               <div className="crop-toggle">

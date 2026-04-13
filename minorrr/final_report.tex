@@ -9,10 +9,18 @@
 \usepackage{lmodern}
 \usepackage{setspace}
 \usepackage{geometry}
+\PassOptionsToPackage{hyphens}{url}
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{url}
+\usepackage[font=small, skip=6pt]{caption}
+
+% Tighter float spacing for improved page utilisation
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{10pt plus 2pt minus 4pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\emergencystretch=2em
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -37,11 +45,11 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Crop diseases pose a persistent threat to global food security, causing yield losses of 20--40\% annually and disproportionately affecting smallholder farmers who lack timely access to diagnostic expertise~\cite{b8}. While image-based disease detection using deep learning has advanced significantly, most existing systems stop at classification and do not provide the actionable remediation guidance that farmers need to respond effectively. This gap between diagnosis and decision-making limits the practical utility of such systems in the field.
+Crop diseases cause yield losses of 20--40\% annually, disproportionately affecting smallholder farmers who lack timely diagnostic expertise~\cite{b8}. Most existing deep-learning-based detection systems stop at classification without providing actionable remediation guidance, limiting their practical utility in the field.
 
-This work presents an integrated \textbf{Image-Based Plant Disease Detection and Remediation Advisory System} that unifies three core components: (i)~a leakage-safe disease classification pipeline built on EfficientNetV2-S~\cite{b1} with crop-specific heads for cotton (8~classes, 96.0\% test accuracy) and wheat (9~classes, 92.9\% test accuracy), trained with focal loss~\cite{b2}, label smoothing, and test-time augmentation; (ii)~a rule-based recommendation engine that maps each detected disease to growth-stage-specific and severity-aware remedies sourced from ICAR, CIMMYT, FAO, and other institutional authorities; and (iii)~a large language model (LLM) advisory layer powered by GPT-4o-mini that synthesises the rule-based output into farmer-friendly guidance covering disease explanation, remedy rationale, application instructions, and itemised cost analysis with current Indian market rates.
+This work presents \textbf{Deep Learning-Based Plant Disease Detection for Cotton and Wheat with Context-Aware Remediation Advice}, integrating: (i)~a leakage-safe EfficientNetV2-S~\cite{b1} classifier with crop-specific heads for cotton (8~classes, 96.0\% accuracy) and wheat (9~classes, 92.9\% accuracy), trained with focal loss~\cite{b2}, label smoothing, and test-time augmentation; (ii)~a rule-based recommendation engine mapping each detected disease to growth-stage-specific, severity-aware remedies from ICAR, CIMMYT, and FAO; and (iii)~a GPT-4o-mini advisory layer that synthesises rule-based output into farmer-friendly guidance covering disease explanation, remedy rationale, application instructions, and itemised cost analysis at Indian market rates. Cotton and wheat were selected for their complementary importance in Indian agriculture---cotton as a major cash crop, wheat as a staple food crop---both exhibiting visually distinguishable foliar symptoms suited to image-based detection. Focusing on two crops within a minor project scope enabled rigorous dataset curation and evaluation; the modular design permits extension to additional crops by adding new classification heads and knowledge-base entries.
 
-The system is deployed as a responsive web application backed by a FastAPI inference server and evaluated on rigorously deduplicated, group-aware dataset splits that prevent train--test contamination. Grad-CAM~\cite{b3} visualisations confirm that predictions are grounded in biologically relevant leaf regions rather than background artefacts. The proposed system demonstrates that coupling accurate disease detection with context-aware remediation advice produces a practical, end-to-end decision-support tool for sustainable crop protection.
+The system is deployed as a responsive web application backed by a FastAPI inference server and evaluated on rigorously deduplicated, group-aware dataset splits that prevent train--test contamination. Grad-CAM~\cite{b3} visualisations confirm that predictions are grounded in biologically relevant leaf regions. The proposed system demonstrates that coupling accurate detection with context-aware remediation advice produces a practical, end-to-end decision-support tool for sustainable crop protection.
 
 \setcounter{tocdepth}{2}
 \tableofcontents
@@ -86,10 +94,10 @@ The main contributions of this work are as follows:
 \end{itemize}
 
 \section{Scope and Delimitation}
-The system is instantiated for two crops---cotton and wheat---which collectively represent major cash and food crops in Indian agriculture. Although the framework is architecturally extensible to additional crops, restricting the study to two domains ensures controlled experimentation, eliminates cross-crop ambiguity, and permits rigorous evaluation. The remediation advisory is designed for Indian agronomic conditions and market pricing; adaptation to other geographies would require updating the knowledge base and cost tables.
+The system is instantiated for two crops---cotton and wheat---which were selected for their complementary importance in Indian agriculture: wheat is a principal food crop essential for national food security, while cotton is a leading cash crop supporting millions of farming households. Both crops are affected by multiple diseases with visually distinctive foliar symptoms, making them well-suited for image-based detection and remediation advisory. Focusing the study on two crops rather than a broader set ensures controlled experimentation, eliminates cross-crop class ambiguity, and permits rigorous evaluation of every pipeline component---a priority given the scope of a minor project. The framework is, however, architecturally extensible: adding a new crop requires only a new classification head, a corresponding knowledge-base module, and growth-stage definitions; the backbone, training recipe, and advisory pipeline remain unchanged. The remediation advisory is designed for Indian agronomic conditions and market pricing; adaptation to other geographies would require updating the knowledge base and cost tables.
 
 \section{Report Organisation}
-The remainder of this report is organised as follows. Chapter~2 reviews related work in deep-learning-based plant disease detection, transfer learning for agriculture, decision support systems, and the emerging role of large language models in agricultural advisory. Chapter~3 details the system design and methodology, covering the detection pipeline, dataset engineering, model architecture, the rule-based recommendation engine, and the LLM advisory layer. Chapter~4 presents the experimental setup, results, ablation studies, explainability analysis, and deployment architecture. Chapter~5 concludes the report with a discussion of limitations and directions for future work.
+The remainder of this report is organised as follows. Chapter~2 reviews related work in deep-learning-based plant disease detection, transfer learning for agriculture, decision support systems, and the emerging role of large language models in agricultural advisory. Chapter~3 details the system design and methodology, covering the overall system architecture, the detection pipeline, dataset engineering, model architecture, data augmentation, the rule-based recommendation engine, and the LLM advisory layer. Chapter~4 presents the experimental setup, results, ablation studies, explainability analysis, and deployment architecture. Chapter~5 concludes the report with a discussion of limitations and directions for future work.
 
 %% =========================================================================
 \chapter{Literature Review}
@@ -128,18 +136,64 @@ These studies suggest that LLMs can serve as an effective interface layer betwee
 Farmer adoption of AI-based tools depends critically on trust, which in turn requires transparency in model decision-making. Selvaraju et al.~\cite{b3} introduced Gradient-weighted Class Activation Mapping (Grad-CAM), a post-hoc explainability technique that produces visual heatmaps highlighting the image regions most influential in the model's prediction. In agricultural contexts, Grad-CAM visualisations can confirm that the classifier attends to disease-relevant leaf regions---such as lesions, discolouration, and necrotic patches---rather than background artefacts or imaging conditions, thereby increasing trust and interpretability~\cite{b4,b12}.
 
 \section{Datasets for Cotton and Wheat Disease Classification}
-The proposed system is evaluated on publicly available datasets for cotton and wheat disease classification, providing diverse field-level images under varying environmental conditions.
+The proposed system is evaluated on publicly available datasets for cotton and wheat disease classification, providing diverse field-level images under varying environmental conditions. In both cases, only those images relevant to the Indian agricultural context were selected from the source repositories for use in this project.
 
-\textbf{Cotton Dataset.} The cotton disease dataset is obtained from the Mendeley Data repository and includes annotated images of multiple cotton leaf disease categories with real-world field variations in lighting, occlusion, and background noise.
+\textbf{Cotton Dataset.} The cotton disease dataset is compiled from publicly available sources, including the Mendeley Data repository and Kaggle. It comprises 8\,750 annotated images across 8 disease and condition categories, captured under real-world field variations in lighting, occlusion, and background noise. Table~\ref{tab:cotton-raw} presents the per-class image distribution.
 \begin{itemize}
-    \item Source: \url{https://data.mendeley.com/datasets/b3jy2p6k8w/2}
+    \item Source~1: \url{https://data.mendeley.com/datasets/b3jy2p6k8w/2}
+    \item Source~2: \url{https://www.kaggle.com/datasets/seroshkarim/cotton-leaf-disease-dataset}
 \end{itemize}
 
-\textbf{Wheat Dataset.} The wheat disease dataset is compiled from publicly available sources, including Kaggle and Mendeley Data. It consists of images across multiple disease classes such as rusts, blights, mildew, and healthy leaves.
+\begin{table}[H]
+\centering
+\caption{Cotton Dataset -- Raw Per-Class Image Distribution}
+\label{tab:cotton-raw}
+\begin{tabular}{lr}
+\toprule
+Disease Class & Images \\
+\midrule
+Bacterial Blight & 1\,000 \\
+Leaf Curl Virus & 1\,000 \\
+Herbicide Growth Damage & 1\,000 \\
+Leaf Hopper (Jassid) Damage & 1\,000 \\
+Leaf Reddening & 1\,000 \\
+Leaf Variegation & 1\,000 \\
+Healthy Leaves & 1\,000 \\
+Fusarium Wilt & 1\,750 \\
+\midrule
+\textbf{Total} & \textbf{8\,750} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Wheat Dataset.} The wheat disease dataset is compiled from publicly available sources, including Mendeley Data and Kaggle. It comprises 13\,475 images across 9 disease and condition classes, covering rusts, blights, powdery mildew, and other wheat pathologies. As with the cotton dataset, only those images pertinent to Indian agronomic conditions were retained. Table~\ref{tab:wheat-raw} presents the per-class image distribution.
 \begin{itemize}
-    \item Source 1: \url{https://www.kaggle.com/datasets/kushagra3204/wheat-plant-diseases}
-    \item Source 2: \url{https://data.mendeley.com/datasets/5gc7hwydwg/1}
+    \item Source~1: \url{https://data.mendeley.com/datasets/5gc7hwydwg/1}
+    \item Source~2: \url{https://www.kaggle.com/datasets/freedomfighter1290/wheat-disease}
 \end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Wheat Dataset -- Raw Per-Class Image Distribution}
+\label{tab:wheat-raw}
+\begin{tabular}{lr}
+\toprule
+Disease Class & Images \\
+\midrule
+Black Rust (Stem Rust) & 1\,743 \\
+Black Point & 1\,000 \\
+Fusarium Foot Rot & 1\,000 \\
+Leaf Blight & 1\,000 \\
+Powdery Mildew & 1\,151 \\
+Smut & 1\,139 \\
+Wheat Blast & 1\,468 \\
+Yellow Rust (Stripe Rust) & 2\,974 \\
+Healthy Plant & 2\,000 \\
+\midrule
+\textbf{Total} & \textbf{13\,475} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Both datasets are preprocessed using the leakage-safe pipeline described in Chapter~3, which includes duplicate removal, near-duplicate filtering, group-aware splitting, and validation auditing to prevent data contamination and ensure reliable evaluation.
 
@@ -162,6 +216,19 @@ The end-to-end workflow is:
 \end{center}
 
 This design ensures that the detection module provides high-confidence disease labels, the recommendation engine contributes evidence-based treatment data, and the LLM layer translates technical content into accessible guidance---each module compensating for the limitations of the others.
+
+Figure~\ref{fig:system-architecture} presents the complete system architecture, illustrating the end-to-end data flow from user input to advisory output. The workflow proceeds as follows. The farmer uploads a leaf photograph through the web application frontend and provides contextual metadata---crop type, observed growth stage, perceived severity level, and farm size in acres. The \textbf{Disease Detection} module processes the image through the appropriate crop-specific EfficientNetV2-S classifier, producing a disease prediction with an associated confidence score.
+
+The prediction, together with the user-supplied metadata, is routed to the \textbf{Recommendation Orchestrator}, a FastAPI-hosted backend that coordinates the advisory pipeline through four sequential stages. First, the \textbf{Input Validator} verifies that the declared crop is supported, that the predicted disease belongs to the specified crop's disease catalogue, and that the growth stage, severity level, and farm size fall within acceptable ranges. Second, the \textbf{Rule-Based Knowledge Engine} retrieves disease-specific information from the structured knowledge base, including disease metadata, base remedies, growth-stage-specific treatments, severity-escalated protocols, preventive measures, and source citations from authoritative institutions. Third, the \textbf{Remedy Merger and Prioritiser} deduplicates overlapping recommendations across base, stage-specific, and severity-specific entries, and ranks them by treatment priority. Fourth, the \textbf{Cost Estimation Engine} performs market-rate lookups for recommended products, computes per-acre dosages, and generates option-wise total cost breakdowns scaled to the farmer's declared acreage.
+
+The consolidated remedy data and cost estimates are then passed to the \textbf{LLM Advisory Layer}, which employs a constrained GPT-4o-mini prompt to synthesise the structured inputs into a farmer-friendly advisory comprising four sections: disease explanation, remedy explanation, application guide, and cost analysis. The advisory is returned as a grounded JSON response, ensuring that all factual content is anchored in the rule-based output and the predefined market-rate dictionary. Finally, the \textbf{Web Application Frontend} renders the results through dedicated visual components, presenting the diagnosis alongside treatment recommendations, an application timeline, and an itemised cost comparison to support informed decision-making.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{full_architecture.png}{\includegraphics[width=\textwidth, height=0.42\textheight, keepaspectratio]{full_architecture.png}}{\fbox{\parbox[c][6cm][c]{\textwidth}{full\_architecture.png not available}}}
+\caption[Complete system architecture of the disease detection and remediation advisory system]{Complete system architecture of the proposed Deep Learning-Based Plant Disease Detection for Cotton and Wheat with Context-Aware Remediation Advice. The diagram illustrates the end-to-end pipeline from disease detection through the recommendation orchestrator---comprising input validation, rule-based knowledge retrieval, remedy prioritisation, cost estimation, and LLM-powered advisory generation---to the farmer-facing web application interface.}
+\label{fig:system-architecture}
+\end{figure}
 
 \section{Disease Detection Module}
 
@@ -188,15 +255,58 @@ After splitting, a post-hoc audit verifies zero hash overlap between the trainin
 \toprule
 Crop & Raw Images & Cleaned Images & Disease Classes \\
 \midrule
-Cotton & $\sim$7\,000 & 4\,707 & 8 \\
-Wheat & 9\,310 & 9\,310 & 9 \\
+Cotton & 8\,750 & 4\,707 & 8 \\
+Wheat & 13\,475 & 9\,310 & 9 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Cotton classes (8):} Bacterial Blight, Curl Virus, Fusarium Wilt, Healthy Leaf, Herbicide Growth Damage, Leaf Hopper Jassids, Leaf Redding, and Leaf Variegation.
+\textbf{Cotton classes (8):} Bacterial Blight, Leaf Curl Virus, Fusarium Wilt, Healthy Leaves, Herbicide Growth Damage, Leaf Hopper (Jassid) Damage, Leaf Reddening, and Leaf Variegation.
 
-\textbf{Wheat classes (9):} Black Rust (Stem Rust), Black Point, Fusarium Foot Rot, Healthy Plant, Leaf Blight, Mildew, Smut, Wheat Blast, and Yellow Rust (Leaf Rust).
+\textbf{Wheat classes (9):} Black Rust (Stem Rust), Black Point, Fusarium Foot Rot, Healthy Plant, Leaf Blight, Powdery Mildew, Smut, Wheat Blast, and Yellow Rust (Stripe Rust).
+
+Understanding the characteristic visual symptoms of each disease class is essential for interpreting model predictions and assessing classification difficulty. Tables~\ref{tab:cotton-symptoms} and~\ref{tab:wheat-symptoms} summarise the validated diagnostic symptoms for the cotton and wheat disease classes, respectively.
+
+\begin{table}[H]
+\centering
+\caption{Characteristic Symptoms of Cotton Diseases}
+\label{tab:cotton-symptoms}
+\begin{tabular}{lp{9.5cm}}
+\toprule
+Disease & Validated Characteristic Symptoms \\
+\midrule
+Bacterial Blight & Small water-soaked leaf spots appear first; they become angular because they are limited by veins and later turn brown to black~\cite{b26}. \\
+Leaf Curl Virus & Young leaves show upward or downward curling, often with vein thickening or darkening and cup-shaped enations on the underside~\cite{b27}. \\
+Herbicide Growth Damage & Leaves may become twisted, narrow, cupped, curled, or otherwise malformed; stunting and chlorosis can also occur~\cite{b28}. \\
+Leaf Hopper (Jassid) Damage & Yellowing starts at leaf margins, followed by curling, reddening or bronzing, and later browning or drying (``hopperburn'')~\cite{b29}. \\
+Leaf Reddening & Leaves develop reddish or purplish discolouration, usually beginning at the margins and later spreading over more of the blade~\cite{b30}. \\
+Leaf Variegation & Irregular green--yellow to white--yellow patchy discolouration produces a mottled or mosaic-like appearance on leaves~\cite{b31}. \\
+Healthy Leaves & No visible disease symptoms. \\
+Fusarium Wilt & Yellowing usually begins on lower or older leaves, followed by drooping, wilting, and vascular browning in affected plants~\cite{b32}. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Characteristic Symptoms of Wheat Diseases}
+\label{tab:wheat-symptoms}
+\begin{tabular}{lp{9.5cm}}
+\toprule
+Disease & Validated Characteristic Symptoms \\
+\midrule
+Black Rust (Stem Rust) & Dark reddish-brown rust pustules appear mainly on stems and leaf sheaths; in later stages, pustules turn black~\cite{b33}. \\
+Black Point & Dark brown to black discolouration develops at the embryo (germ) end of the grain, sometimes extending to nearby grain tissue~\cite{b34}. \\
+Fusarium Foot Rot & Browning and rotting occur in roots, crown, and stem base, often with dark brown lesions near the lower nodes~\cite{b35}. \\
+Leaf Blight & Reddish-brown to brown lesions form on leaves, often with yellow margins; lesions may enlarge, merge, and dry the leaf~\cite{b36}. \\
+Powdery Mildew & White to grey powdery fungal growth appears on leaves and may also spread to sheaths and stems~\cite{b37}. \\
+Smut & Black powdery spore masses replace normal grain or floral tissues in the ear or head~\cite{b38}. \\
+Wheat Blast & Partial or complete bleaching of spikelets or spikes is typical; grains may become shrivelled, poorly filled, or absent~\cite{b39}. \\
+Yellow Rust (Stripe Rust) & Yellow to orange-yellow pustules form in narrow stripes along the leaves; lesions may also occur on sheaths and glumes~\cite{b40}. \\
+Healthy Plant & No visible disease symptoms. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Model Architecture}
 The shared backbone is EfficientNetV2-S~\cite{b1}, selected for its superior accuracy-to-efficiency trade-off achieved through Fused-MBConv blocks and progressive learning. The model accepts input images of size $224 \times 224 \times 3$. A compact classification head is attached after global average pooling:
@@ -205,7 +315,7 @@ The shared backbone is EfficientNetV2-S~\cite{b1}, selected for its superior acc
     \item EfficientNetV2-S backbone pretrained on ImageNet~\cite{b15}
     \item Global average pooling
     \item Batch normalisation
-    \item Dropout ($p = 0.3$) for regularisation
+    \item Dropout (crop-specific: $p = 0.30$ for cotton, $p = 0.45$ for wheat) for regularisation
     \item Dense layer with crop-specific softmax activation (8~units for cotton, 9~units for wheat)
 \end{itemize}
 
@@ -213,16 +323,21 @@ The backbone weights are initially frozen during head training and selectively u
 
 \begin{figure}[H]
 \centering
-\IfFileExists{cotton_model_architecture.png}{\includegraphics[width=0.48\textwidth]{cotton_model_architecture.png}}{\fbox{\parbox[c][3cm][c]{0.48\textwidth}{cotton\_model\_architecture.png not available}}}
-\caption{Cotton disease detection architecture showing the shared EfficientNetV2-S backbone with the cotton-specific 8-class classification head.}
-\label{fig:cotton-model-architecture}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\IfFileExists{wheat_model_architecture.png}{\includegraphics[width=0.48\textwidth]{wheat_model_architecture.png}}{\fbox{\parbox[c][3cm][c]{0.48\textwidth}{wheat\_model\_architecture.png not available}}}
-\caption{Wheat disease detection architecture showing the shared EfficientNetV2-S backbone adapted with a wheat-specific 9-class classification head.}
-\label{fig:wheat-model-architecture}
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \IfFileExists{cotton_model_architecture.png}
+        {\includegraphics[width=\linewidth, height=8cm, keepaspectratio]{cotton_model_architecture.png}}
+        {\fbox{\parbox[c][3cm][c]{0.95\linewidth}{cotton\_model\_architecture.png not available}}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \IfFileExists{wheat_model_architecture.png}
+        {\includegraphics[width=\linewidth, height=8cm, keepaspectratio]{wheat_model_architecture.png}}
+        {\fbox{\parbox[c][3cm][c]{0.95\linewidth}{wheat\_model\_architecture.png not available}}}
+\end{minipage}
+\caption[Crop-specific EfficientNetV2-S classification architectures for cotton and wheat]{Disease detection architectures for cotton (left, 8-class head) and wheat (right, 9-class head), both sharing the EfficientNetV2-S backbone with crop-specific classification heads.}
+\label{fig:model-architectures}
 \end{figure}
 
 \subsection{Loss Function and Regularisation}
@@ -246,6 +361,38 @@ The training follows a staged curriculum~\cite{b23} that progressively increases
     \item \textbf{Stage~5 -- Test-Time Augmentation (TTA):} During validation and final inference, three augmented copies of each image are generated, and their softmax predictions are averaged to produce more robust probability estimates.
 \end{enumerate}
 
+\subsection{Data Augmentation Procedure}
+To enhance the diversity of the training data and improve model robustness under real-world field conditions, a comprehensive set of data augmentation techniques is applied during training. These transformations simulate the natural variations in viewpoint, orientation, scale, lighting, and environmental conditions encountered during field-level image capture, enabling the model to learn invariant features and reducing overfitting to the specific imaging conditions present in the training set.
+
+\paragraph{Geometric Transformations.}
+The following spatial augmentations introduce structural variability in the input images:
+\begin{itemize}
+    \item \textbf{Rotation:} Images are randomly rotated within a range of approximately $\pm 15^\circ$ to $\pm 30^\circ$, simulating different camera angles and orientations during field capture.
+    \item \textbf{Flipping:} Horizontal and vertical flips are applied to provide orientation diversity and ensure the model does not develop a bias toward any particular leaf orientation.
+    \item \textbf{Scaling (Zoom):} Images are randomly zoomed by a factor of approximately $1.1\times$ to $1.3\times$ while maintaining the input dimensions required by the model, simulating varying capture distances in the field.
+    \item \textbf{Shifting:} Small translations of approximately $\pm 10$~pixels along both horizontal and vertical axes improve positional invariance, accounting for off-centre leaf placement in photographs.
+    \item \textbf{Centre Cropping:} Images are cropped to approximately 60--80\% of the original area and resized to the standard input dimensions, simulating partial visibility of leaves under field conditions.
+\end{itemize}
+
+\paragraph{Colour and Intensity Modifications.}
+To account for variations in natural lighting and environmental conditions, the following colour-space augmentations are applied:
+\begin{itemize}
+    \item \textbf{Brightness Adjustment:} Brightness levels are varied within a range of approximately $0.7\times$ to $1.3\times$ the original intensity, simulating different times of day and cloud cover.
+    \item \textbf{Contrast Modification:} Contrast levels are adjusted to simulate different illumination conditions and camera exposure settings encountered across diverse field environments.
+    \item \textbf{Saturation Variation:} Colour saturation is modified to reflect natural variations in leaf colour under different environmental and seasonal conditions.
+\end{itemize}
+
+These augmentation techniques are applied stochastically during training according to the curriculum schedule described in Section~3.2.4: strong augmentation is used during the head-training stage to maximise training diversity, tapering to lighter augmentation during fine-tuning to stabilise convergence. Figure~\ref{fig:data-augmentation} illustrates the complete augmentation pipeline and its effect on representative leaf images.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{data_augmentation.png}{\includegraphics[width=\textwidth, height=0.4\textheight, keepaspectratio]{data_augmentation.png}}{\fbox{\parbox[c][6cm][c]{\textwidth}{data\_augmentation.png not available}}}
+\caption[Data augmentation pipeline: geometric and colour transformations applied during training]{Data augmentation procedure applied during model training. Geometric transformations (left) introduce spatial variability through rotation, flipping, scaling, shifting, and cropping, while colour and intensity modifications (right) simulate real-world lighting conditions through brightness, contrast, and saturation adjustments.}
+\label{fig:data-augmentation}
+\end{figure}
+
+By exposing the model to diverse geometric and photometric transformations, the augmentation pipeline significantly enriches the effective training distribution. This enables the model to learn disease-relevant features that are invariant to incidental imaging conditions---such as camera angle, lighting, and partial occlusion---ultimately enhancing generalisation performance and practical reliability under real-world field deployment.
+
 \subsection{Model Complexity}
 The EfficientNetV2-S backbone contains approximately 20.3~million parameters. During the head-training stage, only $\sim$15.3K parameters are trainable. After fine-tuning is enabled, the trainable count increases as upper layers are unfrozen, while keeping lower feature-extraction layers fixed.
 
@@ -268,13 +415,12 @@ The recommendation engine is a structured Python knowledge base containing disea
 \centering
 \caption{Growth Stages Supported by the Recommendation Engine}
 \label{tab:growth-stages}
-\begin{tabular}{ll}
+\begin{tabular}{lp{10.5cm}}
 \toprule
 Crop & Supported Growth Stages \\
 \midrule
 Cotton & Small Plant, Leaf Growth, Bud Formation, Flowering, Boll Starting, Boll Maturity \\
-Wheat & Small Plant, Tillering, Stem Growth, Booting, Ear Formation/Flowering, \\
-       & Grain Filling, Harvest Ready \\
+Wheat & Small Plant, Tillering, Stem Growth, Booting, Ear Formation/Flowering, Grain Filling, Harvest Ready \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -352,7 +498,7 @@ The system is containerised using Docker and deployed on Render (cloud platform)
     \item \textbf{Backbone:} EfficientNetV2-S pretrained on ImageNet
     \item \textbf{Optimiser:} Adam with learning rate scheduling (warm-up + cosine decay)
     \item \textbf{Loss:} Focal loss ($\gamma = 2.0$) with inverse-frequency class weights
-    \item \textbf{Regularisation:} Dropout ($p = 0.3$), label smoothing ($\epsilon = 0.1$)
+    \item \textbf{Regularisation:} Dropout (crop-specific: $p = 0.30$ for cotton, $p = 0.45$ for wheat), label smoothing ($\epsilon = 0.1$)
     \item \textbf{TTA:} 3~augmented rounds during inference (rotation, flip, colour jitter)
     \item \textbf{Early stopping:} Monitored on validation loss with patience of 10~epochs
     \item \textbf{Checkpoint selection:} Best model selected on validation metric; test set evaluated only once
@@ -366,17 +512,17 @@ Figures~\ref{fig:dataset-pipelines}--\ref{fig:confusion-matrices} document the c
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{cotton_dataset_pipeline.png}
-        {\includegraphics[width=\linewidth]{cotton_dataset_pipeline.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{cotton_dataset_pipeline.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{cotton\_dataset\_pipeline.png not available}}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{wheat_dataset_pipeline.png}
-        {\includegraphics[width=\linewidth]{wheat_dataset_pipeline.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{wheat_dataset_pipeline.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{wheat\_dataset\_pipeline.png not available}}}
 \end{minipage}
-\caption{Leakage-safe dataset pipelines for cotton (left) and wheat (right). Both pipelines apply duplicate removal, near-duplicate filtering, group-aware splitting, and validation auditing to prevent train--test contamination.}
+\caption[Leakage-safe dataset pipelines for cotton (left) and wheat (right)]{Leakage-safe dataset pipelines for cotton (left) and wheat (right). Both pipelines apply duplicate removal, near-duplicate filtering, group-aware splitting, and validation auditing to prevent train--test contamination.}
 \label{fig:dataset-pipelines}
 \end{figure*}
 
@@ -385,17 +531,17 @@ Figures~\ref{fig:dataset-pipelines}--\ref{fig:confusion-matrices} document the c
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{cotton_dataset_distribution.png}
-        {\includegraphics[width=\linewidth]{cotton_dataset_distribution.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{cotton_dataset_distribution.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{cotton\_dataset\_distribution.png not available}}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{wheat_dataset_distribution.png}
-        {\includegraphics[width=\linewidth]{wheat_dataset_distribution.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{wheat_dataset_distribution.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{wheat\_dataset\_distribution.png not available}}}
 \end{minipage}
-\caption{Class distribution after dataset cleaning for cotton (left) and wheat (right). Cotton shows moderate class imbalance addressed using focal loss and class weighting, while wheat is relatively well balanced across disease classes.}
+\caption[Class distribution after cleaning for cotton (left) and wheat (right)]{Class distribution after dataset cleaning for cotton (left) and wheat (right). Cotton shows moderate class imbalance addressed using focal loss and class weighting, while wheat is relatively well balanced.}
 \label{fig:dataset-distribution}
 \end{figure*}
 
@@ -404,17 +550,17 @@ Figures~\ref{fig:dataset-pipelines}--\ref{fig:confusion-matrices} document the c
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{cotton_training_curves.png}
-        {\includegraphics[width=\linewidth]{cotton_training_curves.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{cotton_training_curves.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{cotton\_training\_curves.png not available}}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{wheat_training_curves.png}
-        {\includegraphics[width=\linewidth]{wheat_training_curves.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{wheat_training_curves.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{wheat\_training\_curves.png not available}}}
 \end{minipage}
-\caption{Training and validation curves for cotton (left) and wheat (right). Both models exhibit stable convergence with minimal overfitting, indicating effective regularisation.}
+\caption[Training and validation curves for cotton (left) and wheat (right)]{Training and validation curves for cotton (left) and wheat (right). Both models exhibit stable convergence with minimal overfitting, indicating effective regularisation.}
 \label{fig:training-curves}
 \end{figure*}
 
@@ -423,17 +569,17 @@ Figures~\ref{fig:dataset-pipelines}--\ref{fig:confusion-matrices} document the c
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{cotton_confusion_matrix.png}
-        {\includegraphics[width=\linewidth]{cotton_confusion_matrix.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{cotton_confusion_matrix.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{cotton\_confusion\_matrix.png not available}}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.48\textwidth}
     \centering
     \IfFileExists{wheat_confusion_matrix.png}
-        {\includegraphics[width=\linewidth]{wheat_confusion_matrix.png}}
+        {\includegraphics[width=\linewidth, height=7cm, keepaspectratio]{wheat_confusion_matrix.png}}
         {\fbox{\parbox[c][4cm][c]{0.95\linewidth}{wheat\_confusion\_matrix.png not available}}}
 \end{minipage}
-\caption{Confusion matrices for cotton (left) and wheat (right). Residual misclassifications concentrate among visually similar disease categories under field variability.}
+\caption[Test-set confusion matrices for cotton (left) and wheat (right)]{Confusion matrices for cotton (left) and wheat (right). Residual misclassifications concentrate among visually similar disease categories under field variability.}
 \label{fig:confusion-matrices}
 \end{figure*}
 
@@ -502,7 +648,7 @@ Wheat & 9 & 92.93\% & 0.9270 & 98.06\% & 0.026 & 0.996 \\
 \end{tabular}
 \end{table}
 
-Both models demonstrate strong performance with low calibration error (ECE $<$ 0.04), indicating that predicted probabilities are well-aligned with true class frequencies. The higher wheat ECE is offset by a lower ECE than cotton, suggesting better probability calibration. The ROC-AUC values exceeding 0.996 confirm excellent discriminative ability across all classes.
+Both models demonstrate strong performance with low calibration error (ECE $<$ 0.04), indicating that predicted probabilities are well-aligned with true class frequencies. Notably, the wheat model achieves a lower ECE (0.026) than the cotton model (0.039), indicating superior probability calibration despite the additional class complexity. The ROC-AUC values exceeding 0.996 confirm excellent discriminative ability across all classes.
 
 \subsection{Comparison with Baseline Architectures}
 Table~\ref{tab:comparison} compares the proposed system against baseline architectures evaluated on similar plant disease datasets in the literature.
@@ -552,19 +698,19 @@ The most common misclassifications reflect inherent visual similarity between di
 
 Grad-CAM~\cite{b3} visualisations are applied to the trained EfficientNetV2-S models to verify that predictions are based on biologically relevant disease regions rather than background artefacts. Figures~\ref{fig:wheat-gradcam} and~\ref{fig:cotton-gradcam} demonstrate that the model consistently attends to symptomatic leaf areas---lesions, discolouration, necrotic patches, and infection patterns---across multiple disease classes.
 
-\begin{figure*}[t]
+\begin{figure}[H]
 \centering
-\IfFileExists{wheat_gradcam.png}{\includegraphics[width=0.95\textwidth]{wheat_gradcam.png}}{\fbox{\parbox[c][6cm][c]{0.95\textwidth}{Wheat Grad-CAM figure not available}}}
-\caption{Grad-CAM visualisations for wheat disease detection. Warm regions (red/yellow) indicate high model attention, confirming focus on disease-relevant leaf regions across multiple classes.}
+\IfFileExists{wheat_gradcam.png}{\includegraphics[width=0.58\textwidth, keepaspectratio]{wheat_gradcam.png}}{\fbox{\parbox[c][6cm][c]{0.58\textwidth}{Wheat Grad-CAM figure not available}}}
+\caption[Grad-CAM visualisations for wheat disease detection]{Grad-CAM visualisations for wheat disease detection. Warm regions (red/yellow) indicate high model attention, confirming focus on disease-relevant leaf regions across multiple classes.}
 \label{fig:wheat-gradcam}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[t]
+\begin{figure}[H]
 \centering
-\IfFileExists{cotton_gradcam.png}{\includegraphics[width=0.95\textwidth]{cotton_gradcam.png}}{\fbox{\parbox[c][6cm][c]{0.95\textwidth}{Cotton Grad-CAM figure not available}}}
-\caption{Grad-CAM visualisations for cotton disease classification. The model highlights symptomatic regions across diverse field conditions, validating interpretability and biologically grounded predictions.}
+\IfFileExists{cotton_gradcam.png}{\includegraphics[width=0.58\textwidth, keepaspectratio]{cotton_gradcam.png}}{\fbox{\parbox[c][6cm][c]{0.58\textwidth}{Cotton Grad-CAM figure not available}}}
+\caption[Grad-CAM visualisations for cotton disease classification]{Grad-CAM visualisations for cotton disease classification. The model highlights symptomatic regions across diverse field conditions, validating interpretability and biologically grounded predictions.}
 \label{fig:cotton-gradcam}
-\end{figure*}
+\end{figure}
 
 These visualisations enhance trust by demonstrating that the classifier's high-confidence predictions are not artefacts of background correlation or dataset bias but are grounded in the same visual cues that a trained agronomist would examine.
 
@@ -593,7 +739,7 @@ The end-to-end system offers several practical advantages for real-world agricul
 %% =========================================================================
 
 \section{Conclusion}
-This work presents an integrated Image-Based Plant Disease Detection and Remediation Advisory System that bridges the critical gap between automated disease diagnosis and actionable treatment guidance. The system makes the following demonstrated contributions:
+This work presents \textbf{Deep Learning-Based Plant Disease Detection for Cotton and Wheat with Context-Aware Remediation Advice}, an integrated system that bridges the critical gap between automated disease diagnosis and actionable treatment guidance. The system makes the following demonstrated contributions:
 
 \begin{enumerate}
     \item \textbf{Reliable disease detection:} The leakage-safe EfficientNetV2-S pipeline achieves 96.03\% test accuracy on cotton (8~classes) and 92.93\% on wheat (9~classes), with strong calibration (ECE $<$ 0.04), high discriminative ability (AUC $>$ 0.996), and robust top-2 accuracy exceeding 98\% for both crops. These results are obtained on rigorously deduplicated, group-aware test splits that prevent any form of data leakage.
@@ -618,6 +764,7 @@ The system demonstrates that combining disciplined dataset engineering, modern t
 \end{itemize}
 
 \section{Future Work}
+\enlargethispage{\baselineskip}
 Several directions offer promising avenues for extending this work:
 \begin{itemize}
     \item \textbf{Multimodal sensing:} Integrating weather, soil moisture, and temporal progression data to improve early detection and refine growth-stage-aware recommendations.
@@ -759,6 +906,95 @@ E.~Audsley, A.~Milne, and N.~Paveley,
 Z.~Yuan, K.~Liu, R.~Peng, S.~Li, and others,
 ``PestGPT: Leveraging large language models and IoT for timely and customised recommendation generation in sustainable pest management,''
 \textit{IEEE Internet of Things Magazine}, vol.~7, no.~6, pp.~64--70, 2024.
+
+\bibitem{b26}
+Crop Protection Network,
+``Bacterial Blight of Cotton,''
+available at: \url{https://cropprotectionnetwork.org/encyclopedia/bacterial-blight-of-cotton}
+(accessed April 2025).
+
+\bibitem{b27}
+NSW Department of Primary Industries,
+``Cotton leaf curl disease,''
+available at: \url{https://www.dpi.nsw.gov.au/dpi/biosecurity/plant-biosecurity/insect-pests-and-plant-diseases/cotton-leaf-curl}
+(accessed April 2025).
+
+\bibitem{b28}
+Tennessee Herbicide Stewardship,
+``Diagnosing Suspected Herbicide Damage in Cotton,''
+available at: \url{https://herbicidestewardship.tennessee.edu/diagnosing-suspected-herbicide-damage-in-cotton/}
+(accessed April 2025).
+
+\bibitem{b29}
+Texas Department of Agriculture,
+``Cotton Jassid -- Two-Spot Cotton Leafhopper,''
+available at: \url{https://texasagriculture.gov/Regulatory-Programs/Plant-Quality/Pest-and-Disease-Alerts/Cotton-Jassid-Two-Spot-Cotton-Leafhopper}
+(accessed April 2025).
+
+\bibitem{b30}
+Plantix,
+``Leaf Reddening of Cotton,''
+available at: \url{https://plantix.net/en/library/plant-diseases/900018/leaf-reddening-of-cotton/}
+(accessed April 2025).
+
+\bibitem{b31}
+Plantix,
+``Leaf Variegation,''
+available at: \url{https://plantix.net/en/library/plant-diseases/800107/leaf-variegation/}
+(accessed April 2025).
+
+\bibitem{b32}
+UC Integrated Pest Management,
+``Fusarium Wilt of Cotton,''
+available at: \url{https://ipm.ucanr.edu/agriculture/cotton/fusarium-wilt/}
+(accessed April 2025).
+
+\bibitem{b33}
+NMSU Publications,
+``Leaf, Stem, and Stripe Rust Diseases of Wheat,''
+available at: \url{https://pubs.nmsu.edu/_a/A415/}
+(accessed April 2025).
+
+\bibitem{b34}
+CropWatch, University of Nebraska--Lincoln,
+``Black Point in Wheat,''
+available at: \url{https://cropwatch.unl.edu/8-28-09wheat-blackpoint/}
+(accessed April 2025).
+
+\bibitem{b35}
+Crop Protection Network,
+``Fusarium Root, Crown, and Foot Rot of Wheat,''
+available at: \url{https://cropprotectionnetwork.org/encyclopedia/fusarium-root-crown-and-foot-rot-of-wheat}
+(accessed April 2025).
+
+\bibitem{b36}
+Vikaspedia,
+``Wheat: Diseases and Symptoms,''
+available at: \url{https://en.vikaspedia.in/viewcontent/agriculture/crop-production/integrated-pest-managment/ipm-for-cerels/ipm-strategies-for-wheat/wheat-diseases-and-symptoms}
+(accessed April 2025).
+
+\bibitem{b37}
+Crop Protection Network,
+``Powdery Mildew of Wheat,''
+available at: \url{https://cropprotectionnetwork.org/encyclopedia/powdery-mildew-of-wheat}
+(accessed April 2025).
+
+\bibitem{b38}
+CABI Plantwise Knowledge Bank,
+``Smut Disease in Wheat,''
+available at: \url{https://plantwiseplusknowledgebank.org/doi/full/10.1079/pwkb.20147801540}
+(accessed April 2025).
+
+\bibitem{b39}
+P.~K.~Singh, A.~Gahtyari, and others,
+``Wheat Blast: A Disease Spreading by Intercontinental Jumps and Its Management Strategies,''
+\textit{Frontiers in Plant Science}, vol.~12, Article~710707, 2021.
+
+\bibitem{b40}
+Agritech TNAU,
+``Stripe Rust / Yellow Rust of Wheat,''
+available at: \url{https://agritech.tnau.ac.in/crop_protection/wheat/crop_prot_crop\%20diseases_cereals_wheat_3.html}
+(accessed April 2025).
 
 \end{thebibliography}
 

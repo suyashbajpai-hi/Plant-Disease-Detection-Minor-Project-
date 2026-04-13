@@ -1,0 +1,13 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Cotton disease detection architecture showing the shared EfficientNetV2-S backbone with the cotton-specific 8-class classification head.}}{15}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Wheat disease detection architecture showing the shared EfficientNetV2-S backbone adapted with a wheat-specific 9-class classification head.}}{15}{figure.3.2}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Leakage-safe dataset pipelines for cotton (left) and wheat (right). Both pipelines apply duplicate removal, near-duplicate filtering, group-aware splitting, and validation auditing to prevent train--test contamination.}}{21}{figure.4.1}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Class distribution after dataset cleaning for cotton (left) and wheat (right). Cotton shows moderate class imbalance addressed using focal loss and class weighting, while wheat is relatively well balanced across disease classes.}}{21}{figure.4.2}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Training and validation curves for cotton (left) and wheat (right). Both models exhibit stable convergence with minimal overfitting, indicating effective regularisation.}}{22}{figure.4.3}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Confusion matrices for cotton (left) and wheat (right). Residual misclassifications concentrate among visually similar disease categories under field variability.}}{22}{figure.4.4}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Grad-CAM visualisations for wheat disease detection. Warm regions (red/yellow) indicate high model attention, confirming focus on disease-relevant leaf regions across multiple classes.}}{27}{figure.4.5}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Grad-CAM visualisations for cotton disease classification. The model highlights symptomatic regions across diverse field conditions, validating interpretability and biologically grounded predictions.}}{28}{figure.4.6}%
+\addvspace {10\p@ }

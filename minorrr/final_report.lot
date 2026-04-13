@@ -1,0 +1,13 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Dataset Summary After Leakage-Safe Cleaning}}{14}{table.3.1}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Growth Stages Supported by the Recommendation Engine}}{17}{table.3.2}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces LLM Advisory Output Structure}}{19}{table.3.3}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Cotton Disease Detection -- Test Set Performance}}{23}{table.4.1}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Wheat Disease Detection -- Test Set Performance}}{23}{table.4.2}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Summary Comparison Across Crops}}{23}{table.4.3}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Comparison with Existing Methods}}{24}{table.4.4}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Ablation Study on Training Components (Wheat)}}{24}{table.4.5}%
+\addvspace {10\p@ }

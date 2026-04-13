@@ -1503,8 +1503,53 @@ body {
   flex-shrink: 0;
 }
 
+.spinner.large {
+  width: 3rem;
+  height: 3rem;
+  border-width: 4px;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ─── Loader Overlay ─────────────────────────────────────── */
+
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 3rem;
+  background: var(--surface);
+  border: 1.5px solid rgba(46, 125, 50, 0.2);
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.loader-card h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.loader-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
 }
 
 /* ─── Remedy blocks (new schema) ─────────────────────────── */
@@ -1725,4 +1770,109 @@ body {
 
 .rec-reason strong {
   color: var(--good);
+}
+
+/* ─── View Full Report Button ─────────────────────────────── */
+
+.llm-ready {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.llm-ready-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--good);
+  margin: 0;
+}
+
+.view-report-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.6rem;
+  background: linear-gradient(135deg, var(--good), #388e3c);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  transition: transform 150ms, box-shadow 150ms;
+  box-shadow: 0 2px 8px rgba(27, 94, 32, 0.2);
+}
+
+.view-report-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(27, 94, 32, 0.3);
+}
+
+.view-report-button .button-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ─── Report Page ─────────────────────────────────────────── */
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  background: #fff;
+  color: var(--good);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1.5px solid rgba(46, 125, 50, 0.25);
+  border-radius: 2rem;
+  cursor: pointer;
+  margin-bottom: 1.2rem;
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  width: fit-content;
+}
+
+.back-button:hover {
+  background: rgba(46, 125, 50, 0.07);
+  border-color: var(--good);
+  box-shadow: 0 2px 8px rgba(27, 94, 32, 0.12);
+}
+
+.report-top {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.report-image-card {
+  border: 1.5px solid rgba(46, 125, 50, 0.15);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.report-image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 700px) {
+  .report-top {
+    grid-template-columns: 1fr;
+  }
+
+  .report-image-card {
+    max-height: 260px;
+  }
 }
